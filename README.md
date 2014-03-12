@@ -19,3 +19,6 @@ attempts to optimize two variables:
 
 This should guarantee that at least the most common keys are covered, and that every set is at least
 partially covered, without trying to cover them all at the cost of adding many keys.
+
+TODO: consider replacing the minimum % coverage above with an average % coverage, to prevent one
+odd layout from skewing the whole optimalization process. Likewise with set length.

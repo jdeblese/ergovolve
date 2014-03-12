@@ -147,6 +147,16 @@ nonetheless be left out of the optimalization.'''
 	pop,stats,hof = main(toolbox)
 	# Print out results from the hall of fame
 	for indi in hof :
+		# Upper bounds on number of acceptable keys
+		if len(indi) > 20 :
+			continue
+
+		# Lower bounds on acceptable % coverage
+		for layout in layouts :
+			c,e = cmpLayoutSet(layout, indi)
+			if c*1.0/len(layout) < 0.7 :
+				continue
+
 		print "---\n"
 		for layout,name in zip(layouts,layoutnames) :
 			c,e = cmpLayoutSet(layout, indi)
