@@ -47,7 +47,6 @@ def match_set_layout(keyset1,keyset2,rotated=False) :
 		else :
 			rotkey = (key[0], 'x'.join(key[1].split('x')[::-1]))
 			if rotated and rotkey in modset1 :
-				print "Key " + str(key) + " found in a rotated version, excluding..."
 				modset1.remove(rotkey)
 			else :
 				compl2.append(key)

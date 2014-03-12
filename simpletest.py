@@ -125,6 +125,16 @@ if __name__ == '__main__' :
 	ergoset2 = ((ergoset2[0][0], 'x'.join(ergoset2[0][1].split('x')[::-1])), ) + ergoset2[1:]
 	layouts = (ergoset,ergoset2)
 
+	subset = subset
+	subopt = list(ef.match_set_layout(excludes, layout)[1])
+	for key in subset :
+		subopt.remove(key)
+	if len(subopt) > 0 :
+		print '''The following keys are available in the base
+set in an incorrect orientation. They will
+nonetheless be left out of the optimalization.'''
+		print "  " + '\n  '.join(sorted(map(str,subopt)))
+
 	# Set up DEAP toolbox
 	toolbox = deapsetup(layouts)
 	# Optimize
@@ -136,8 +146,14 @@ if __name__ == '__main__' :
 			c,e = cmpLayoutSet(layout, indi)
 			print "Coverage of layout '" + name + "' is " + str(int(c*100/len(layout))) + "% with " + str(e) + " extra keys"
 			if int(c) != len(layout) :
-				missing = ef.match_set_layout(indi, layout)[1]
-				print "  Missing keys:\n    " + '\n    '.join(sorted(map(str,missing)))
+				suboptimal = list(ef.match_set_layout(indi, layout)[1])
+				missing = ef.match_set_layout(indi,layout,True)[1]
+				for key in missing :
+					suboptimal.remove(key)
+				if len(suboptimal) > 0 :
+					print "  Suboptimal keys:\n    " + '\n    '.join(sorted(map(str,suboptimal)))
+				if len(missing) > 0 :
+					print "  Missing keys:\n    " + '\n    '.join(sorted(map(str,missing)))
 		print ""
 		print '\n'.join(sorted(map(str,indi)))
 		print ""
