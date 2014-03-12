@@ -101,7 +101,7 @@ def parse(filename) :
 				# Combine, then split on commas, removing whitespace
 				# Map the short names to long names. Assume any unknown keys are layer keys
 				prefix = 'SPECIAL_Layer_'
-				keys = map(lambda k: (shortmap[k] if k in shortmap.keys() else (prefix + str(k))),
+				keys = map(lambda k: (shortmap[k] if k in shortmap.keys() else (prefix + str(k) if k[0:3] != 'KEY' else k)),
 					map(lambda k: k.strip(), ''
 						.join(
 						filter(lambda l: l != '',
