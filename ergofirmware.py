@@ -99,8 +99,8 @@ def parse(filename) :
 				# Filter out empty lines
 				# Combine, then split on commas, removing whitespace
 				# Map the short names to long names. Assume any unknown keys are layer keys
-				prefix = 'SPECIAL_Layer_'
-				keys = map(lambda k: (shortmap[k] if k in shortmap.keys() else (prefix + str(k) if k[0:3] != 'KEY' else k)),
+				prefix = 'SPECIAL_Fn'
+				keys = map(lambda k: (shortmap[k] if k in shortmap.keys() else (k if k[0:3] == 'KEY' or k == '0' else prefix )),
 					map(lambda k: k.strip(), ''
 						.join(
 						filter(lambda l: l != '',
@@ -108,8 +108,10 @@ def parse(filename) :
 								lines)))
 						.split(',')))
 				# Ignore keys marked as unused, or keys mapped to '0'
-				layout = filter(lambda p: p[1] != 'unused' and p[0] != prefix + '0', zip(keys,sizes))
+				layout = filter(lambda p: p[1] != 'unused' and p[0] != '0' and p[0] != prefix, zip(keys,sizes))
 	return layout
 
 if __name__ == '__main__' :
-	print parse('jw.c')
+	import sys
+	if len(sys.argv) > 1 :
+		print parse(sys.argv[1])

@@ -96,9 +96,9 @@ def deapsetup(layouts) :
 	return toolbox
 
 def main(toolbox):
-	NGEN = 100
-	MU = 50
-	LAMBDA = 100
+	NGEN = 250
+	MU = 100
+	LAMBDA = 200
 	CXPB = 0.7
 	MUTPB = 0.2
 
@@ -117,23 +117,29 @@ def main(toolbox):
 
 
 if __name__ == '__main__' :
-	layout = ef.parse('layout.c')
+	import sys
+	if len(sys.argv) <= 1 :
+		print "Please provide a file name"
+		sys.exit(-1)
 
-	subset = ef.match_set_layout(excludes, layout, rotated=True)[1]
-	ergoset = tuple(subset)
-	ergoset2 = tuple(ergoset[:-2]) + (("KEY_RightGui", "1x1"), ("KEY_RightControl", "1x1"), ("KEY_RightControl", "1x1"))
-	ergoset2 = ((ergoset2[0][0], 'x'.join(ergoset2[0][1].split('x')[::-1])), ) + ergoset2[1:]
-	layouts = (ergoset,ergoset2)
+	layouts = []
+	layoutnames = tuple(sys.argv[1:])
+	allsubopt = []
+	for fn in layoutnames :
+		this = ef.parse(fn)
+		subset = tuple( ef.match_set_layout(excludes, this, rotated=True)[1] )
+		layouts.append(subset)
 
-	subset = subset
-	subopt = list(ef.match_set_layout(excludes, layout)[1])
-	for key in subset :
-		subopt.remove(key)
-	if len(subopt) > 0 :
+		subopt = list(ef.match_set_layout(excludes, this)[1])
+		for key in subset :
+			subopt.remove(key)
+		allsubopt += subopt
+
+	if len(allsubopt) > 0 :
 		print '''The following keys are available in the base
 set in an incorrect orientation. They will
 nonetheless be left out of the optimalization.'''
-		print "  " + '\n  '.join(sorted(map(str,subopt)))
+		print "  " + '\n  '.join(sorted(map(str,allsubopt)))
 
 	# Set up DEAP toolbox
 	toolbox = deapsetup(layouts)
@@ -142,7 +148,7 @@ nonetheless be left out of the optimalization.'''
 	# Print out results from the hall of fame
 	for indi in hof :
 		print "---\n"
-		for layout,name in zip(layouts,('test1','test2')) :
+		for layout,name in zip(layouts,layoutnames) :
 			c,e = cmpLayoutSet(layout, indi)
 			print "Coverage of layout '" + name + "' is " + str(int(c*100/len(layout))) + "% with " + str(e) + " extra keys"
 			if int(c) != len(layout) :
@@ -155,5 +161,5 @@ nonetheless be left out of the optimalization.'''
 				if len(missing) > 0 :
 					print "  Missing keys:\n    " + '\n    '.join(sorted(map(str,missing)))
 		print ""
-		print '\n'.join(sorted(map(str,indi)))
+		print '\n'.join(sorted(map(lambda k: str(k[::-1]),indi)))
 		print ""
