@@ -152,10 +152,13 @@ nonetheless be left out of the optimalization.'''
 			continue
 
 		# Lower bounds on acceptable % coverage
+		skip = False
 		for layout in layouts :
 			c,e = cmpLayoutSet(layout, indi)
 			if c*1.0/len(layout) < 0.7 :
-				continue
+				skip = True
+		if skip :
+			continue
 
 		print "---\n"
 		for layout,name in zip(layouts,layoutnames) :
