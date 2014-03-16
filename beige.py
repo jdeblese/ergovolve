@@ -35,14 +35,14 @@ base_nav = (("KEY_Escape", "1x1"),
 ("KEY_RightArrow","1x1"), ("KEY_LeftArrow","1x1"), ("KEY_DownArrow","1x1"), ("KEY_UpArrow","1x1"))
 
 base_mod = (('KEY_CapsLock', '1.75x1'),
-		('KEY_LeftShift', '2.25x1'),
-		('KEY_RightShift', '2.75x1'),
-		('KEY_LeftControl', '1.25x1'),
-		('KEY_LeftAlt', '1.25x1'),
-#		('KEY_LeftGui', '1.25x1'),
-		('KEY_RightControl', '1.25x1'),
-		('KEY_RightAlt', '1.25x1'),
-#		('KEY_RightGui', '1.25x1'),
+		('KEY_Shift', '2.25x1'),
+		('KEY_Shift', '2.75x1'),
+		('KEY_Control', '1.25x1'),
+		('KEY_Alt', '1.25x1'),
+#		('KEY_Gui', '1.25x1'),
+		('KEY_Control', '1.25x1'),
+		('KEY_Alt', '1.25x1'),
+#		('KEY_Gui', '1.25x1'),
 		('KEY_Menu', '1.25x1'))
 
 numpad = (
@@ -68,15 +68,15 @@ numpad = (
 ('KEYPAD_00','1x1'),
 ('KEYPAD_Period_Delete','1x1'))
 
-pro_10mod = (("KEY_RightControl", "1x1"), ("KEY_LeftControl", "1x1"),
+pro_10mod = (("KEY_Control", "1x1"), ("KEY_Control", "1x1"),
 		('KEY_Menu','1x1'),
 		('KEY_Tab','1x1'),
 		('KEY_DeleteBackspace','1x1'),
-("KEY_RightAlt", "1x1"), ("KEY_LeftAlt", "1x1"))
+("KEY_Alt", "1x1"), ("KEY_Alt", "1x1"))
 
 
-pro_15mod = (("KEY_RightControl", "1.5x1"), ("KEY_LeftControl", "1.5x1"),
-("KEY_RightAlt", "1.5x1"), ("KEY_LeftAlt", "1.5x1"),
-("KEY_DeleteBackspace", "1.5x1"), ("KEY_Tab", "1.5x1"))
+pro_15mod = (("KEY_Control", "1.5x1"), ("KEY_Control", "1.5x1"),
+("KEY_Alt", "1.5x1"), ("KEY_Alt", "1.5x1"),
+("KEY_DeleteBackspace", "1.5x1"), ('KEY_CapsLock', '1.5x1'), ('SPECIAL_Fn', '1.5x1'))
 
-fullset = base_alphas + base_numerics + base_syms + base_fn + base_nav + base_mod + numpad + pro_10mod + pro_15mod
+fullset = base_alphas + base_numerics + base_syms + base_fn + base_nav + base_mod + pro_10mod + pro_15mod

@@ -182,6 +182,9 @@ def loadLayouts(filenames) :
 				for key in user['double_keys'] :
 					this.append((key, '1x2'))
 				layouts[user['name']] = list(this)
+	# Key filters
+#	for name in layouts.keys() :
+#		layouts[name] = tuple( filter(lambda k: k[0] != 'SPECIAL_Fn', layouts[name]) )
 	# Apply simplifications
 	simpl = { 'KEY_LeftAlt' : 'KEY_Alt', 'KEY_RightAlt' : 'KEY_Alt',
 	          'KEY_LeftControl' : 'KEY_Control', 'KEY_RightControl' : 'KEY_Control',
@@ -225,6 +228,7 @@ def printStats(hof, layouts, laysubopt) :
 		print "  median coverage %.1f%%"%(numpy.median(coverage)*100)
 		print "  minimum coverage %.1f%%"%(coverage.min()*100)
 		print "  maximum coverage %.1f%%"%(coverage.max()*100)
+		print "  %.0f mean extra keys "%(extra.mean())
 		# Print the keys in this set
 		print '\n'.join(map(lambda k: str(k[::-1]),indi)) + '\n'
 		# Generate statistics for how well this set covers each layout
