@@ -30,39 +30,6 @@ sizes = ('unused',
          '1x1', '1x2', '1x2' )
 
 
-# Some keys can be used interchangeably
-aliases = (
-	(("KEY_ReturnEnter", "1x2"), ("KEYPAD_ENTER", "1x2")), )
-
-# Given two sets, return their relative complements
-def match_set_layout(keyset1,keyset2,rotated=False) :
-	modset1 = list(keyset1)
-	modset2 = list(keyset2)
-	compl2 = []
-	# Find the keys in each set that are not in the other. Include
-	# rotated versions of keys, if so desired.
-	for key in modset2 :
-		if key in modset1 :
-			modset1.remove(key)
-		else :
-			rotkey = (key[0], 'x'.join(key[1].split('x')[::-1]))
-			if rotated and rotkey in modset1 :
-				modset1.remove(rotkey)
-			else :
-				compl2.append(key)
-	# Now check if any aliased keys are in both
-	for pair in aliases :
-		if pair[0] in modset1 and pair[1] in compl2 :
-			modset1.remove(pair[0])
-			compl2.remove(pair[1])
-			print "Treating " + pair[0][0] + " and " + pair[1][0] + " as identical"
-		elif pair[1] in modset1 and pair[0] in compl2 :
-			modset1.remove(pair[1])
-			compl2.remove(pair[0])
-			print "Treating " + pair[0][0] + " and " + pair[1][0] + " as identical"
-	# Return the Relative Complements of the two sets
-	return tuple(modset1), tuple(compl2)
-
 # Build a dictionary mapping based on C #defines
 def buildmap(fn, typefn, regex) :
 	mapdict = {}
@@ -108,7 +75,7 @@ def parse(filename) :
 								lines)))
 						.split(',')))
 				# Ignore keys marked as unused, or keys mapped to '0'
-				layout = filter(lambda p: p[1] != 'unused' and p[0] != '0' and p[0] != prefix, zip(keys,sizes))
+				layout = filter(lambda p: p[1] != 'unused' and p[0] != '0', zip(keys,sizes))
 	return layout
 
 if __name__ == '__main__' :
