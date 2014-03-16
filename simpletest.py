@@ -92,7 +92,9 @@ def deapsetup(layouts) :
 
 	# Define functions here that form a closure using 'items'
 	def evalLayout(individual) :
-		avgcoverage, maxextra = 0.0, 0.0
+		if len(individual) > 40 :
+			return 1000.0,0.0
+		avgcoverage, avgextra = 0.0, 0.0
 		for layout in layouts :
 			txt = map(lambda idx: items[idx], individual)
 			coverage,extra = cmpLayoutSet(layout, txt)
@@ -100,8 +102,8 @@ def deapsetup(layouts) :
 			assert coverage <= 1.0
 			assert coverage >= 0.0
 			avgcoverage += coverage
-			maxextra += extra
-		return maxextra/len(layouts),avgcoverage/len(layouts)
+			avgextra += extra
+		return avgextra/len(layouts),avgcoverage/len(layouts)
 
 	def mutSet(individual):
 		"""Mutation that pops or add an element."""
@@ -205,9 +207,6 @@ nonetheless be left out of the optimalization.'''
 	pop,stats,hof = main(toolbox)
 	# Print out results from the hall of fame
 	for indi in hof :
-		# Upper bounds on number of acceptable keys
-		if len(indi) > 20 :
-			continue
 
 		# Lower bounds on acceptable % coverage
 		coverage,extra = [],[]
@@ -218,13 +217,10 @@ nonetheless be left out of the optimalization.'''
 			extra.append(e)
 		coverage = numpy.array(coverage)
 		extra = numpy.array(extra)
-#		if coverage.min() < 0.6 :
-#			print "Minimum coverage is too low (%.0f%%)"%(coverage.min()*100)
-#			continue
 
 		print "---\n"
 		# Print the average % coverage
-		print "%d keys with an average coverage of %.0f%%\n"%(len(indi), coverage.mean()*100)
+		print "%d keys with an average coverage of %.0f%% +- %.0f%%, min/max %.0f%%/%.0f%%\n"%(len(indi), coverage.mean()*100, coverage.std()*100, coverage.min()*100,coverage.max()*100)
 		# Print the keys in this set
 		print '\n'.join(sorted(map(lambda k: str(k[::-1]),indi))) + '\n'
 		# Generate statistics for how well this set covers each layout
