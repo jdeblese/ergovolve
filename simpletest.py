@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys,os,re,string,random,math,numpy
+import sys,os,re,string,random,math,numpy,json
 from deap import algorithms, base, creator, tools
 
 from beige import fullset as excludes
@@ -82,7 +82,8 @@ def cxSet(ind1, ind2):
 def deapsetup(layouts) :
 	# Make a list of all desired keys, so that an individual can be an index to this list
 	items = []
-	for keyset in layouts :
+	for name in layouts.keys() :
+		keyset = layouts[name]
 		for key in keyset :
 			if key not in items :
 				items.append(key)
@@ -95,7 +96,8 @@ def deapsetup(layouts) :
 		if len(individual) > 40 :
 			return 1000.0,0.0
 		avgcoverage, avgextra = 0.0, 0.0
-		for layout in layouts :
+		for name in layouts.keys() :
+			layout = layouts[name]
 			txt = map(lambda idx: items[idx], individual)
 			coverage,extra = cmpLayoutSet(layout, txt)
 			coverage /= float(len(layout))
@@ -138,9 +140,9 @@ def deapsetup(layouts) :
 	return toolbox
 
 def main(toolbox):
-	NGEN = 250
-	MU = 100
-	LAMBDA = 200
+	NGEN = 2000
+	MU = 200
+	LAMBDA = 300
 	CXPB = 0.7
 	MUTPB = 0.2
 
@@ -157,32 +159,21 @@ def main(toolbox):
 
 	return toolbox.unmap(pop), stats, toolbox.unmap(hof)
 
-
-if __name__ == '__main__' :
-	import sys,json
-	if len(sys.argv) <= 1 :
-		print "Please provide a file name"
-		sys.exit(-1)
-
-	filenames = tuple(sys.argv[1:])
-	layouts = []
-	layoutnames = []
-	laysubopt = []
-	allsubopt = []
+def loadLayouts(filenames) :
+	layouts = {}
 	for fn in filenames :
 		if fn[-1] == 'c' :
 			this = ef.parse(fn)
-			subset,rotated = match_set_layout(excludes, this, rotated=True)[1:]
-			layouts.append(filter(lambda k: k[1] != '1x1', subset))
-			laysubopt.append(filter(lambda k: k[1] != '1x1', rotated))
-			allsubopt += rotated
-			layoutnames.append(fn[:-2])
+			name = fn[:-2]
+			if name in layouts.keys() :
+				raise RuntimeError("Duplicate layout " + user['name'])
+			layouts[fn[:-2]] = filter(lambda k: k[1] != '1x1', this)
 		elif fn[-4:] == 'json' :
 			with open(fn,'r') as fh :
 				jdata = json.load(fh)
-			print 'Importing %d layouts from JSON'%len(jdata)
 			for user in jdata :
-				layoutnames.append(user['name'])
+				if user['name'] in layouts.keys() :
+					raise RuntimeError("Duplicate layout " + user['name'])
 				this = []
 				for key in user['horizontal_keys'] :
 					this.append((key, '1.5x1'))
@@ -190,29 +181,37 @@ if __name__ == '__main__' :
 					this.append((key, '1x1.5'))
 				for key in user['double_keys'] :
 					this.append((key, '1x2'))
-				subset,rotated = match_set_layout(excludes, this, rotated=True)[1:]
-				layouts.append(filter(lambda k: k[1] != '1x1', subset))
-				laysubopt.append(filter(lambda k: k[1] != '1x1', rotated))
-				allsubopt += rotated
+				layouts[user['name']] = list(this)
+	# Apply simplifications
+	simpl = { 'KEY_LeftAlt' : 'KEY_Alt', 'KEY_RightAlt' : 'KEY_Alt',
+	          'KEY_LeftControl' : 'KEY_Control', 'KEY_RightControl' : 'KEY_Control',
+	          'KEY_LeftShift' : 'KEY_Shift', 'KEY_RightShift' : 'KEY_Shift',
+	          'KEY_LeftGUI' : 'KEY_GUI', 'KEY_RightGUI' : 'KEY_GUI'}
+	for name in layouts.keys() :
+		layouts[name] = tuple( map(lambda k: ((simpl[k[0]],k[1]) if k[0] in simpl.keys() else k), layouts[name]) )
+	return layouts
 
-	if len(allsubopt) > 0 :
-		print '''The following keys are available in the base
-set in an incorrect orientation. They will
-nonetheless be left out of the optimalization.'''
-		print "  " + '\n  '.join(sorted(map(str,allsubopt)))
+def loadSubLayouts(filenames) :
+	layouts = loadLayouts(filenames)
+	laysubopt = {}
+	allsubopt = []
+	for name in layouts.keys() :
+		subset,rotated = match_set_layout(excludes, layouts[name], rotated=True)[1:]
+		layouts[name] = filter(lambda k: k[1] != '1x1', subset)
+		laysubopt[name] = filter(lambda k: k[1] != '1x1', rotated)
+		allsubopt += rotated
+	return layouts, laysubopt, allsubopt
 
-	# Set up DEAP toolbox
-	toolbox = deapsetup(layouts)
-	# Optimize
-	pop,stats,hof = main(toolbox)
-	# Print out results from the hall of fame
+
+def printStats(hof, layouts, laysubopt) :
 	for indi in hof :
-
 		# Lower bounds on acceptable % coverage
-		coverage,extra = [],[]
-		for layout in layouts :
+		names,coverage,extra = [],[],[]
+		for name in sorted(layouts.keys()) :
+			layout = layouts[name]
 			c,e = cmpLayoutSet(layout, indi)
 			c /= float(len(layout))
+			names.append(name)
 			coverage.append(c)
 			extra.append(e)
 		coverage = numpy.array(coverage)
@@ -220,11 +219,18 @@ nonetheless be left out of the optimalization.'''
 
 		print "---\n"
 		# Print the average % coverage
-		print "%d keys with an average coverage of %.0f%% +- %.0f%%, min/max %.0f%%/%.0f%%\n"%(len(indi), coverage.mean()*100, coverage.std()*100, coverage.min()*100,coverage.max()*100)
+		print "%d keys, with:"%len(indi)
+		print "  mean coverage %.1f%%"%(coverage.mean()*100)
+		print "    std. deviation %.1f%%"%((coverage - coverage.mean()).std()*100)
+		print "  median coverage %.1f%%"%(numpy.median(coverage)*100)
+		print "  minimum coverage %.1f%%"%(coverage.min()*100)
+		print "  maximum coverage %.1f%%"%(coverage.max()*100)
 		# Print the keys in this set
-		print '\n'.join(sorted(map(lambda k: str(k[::-1]),indi))) + '\n'
+		print '\n'.join(map(lambda k: str(k[::-1]),indi)) + '\n'
 		# Generate statistics for how well this set covers each layout
-		for layout,name,c,e,prerot in zip(layouts,layoutnames,coverage,extra,laysubopt) :
+		for name,c,e in zip(names,coverage,extra) :
+			layout = layouts[name]
+			prerot = laysubopt[name]
 			print "Coverage of layout '%s' is %.0f%% with %d extra keys"%(name,100*c,e)
 			if c != 1.0 :
 				missing,rotated = match_set_layout(indi,layout,True)[1:]
@@ -234,5 +240,21 @@ nonetheless be left out of the optimalization.'''
 					print "  Suboptimal keys:\n    " + '\n    '.join(sorted(map(str,rotated)))
 				if len(missing) > 0 :
 					print "  Missing keys:\n    " + '\n    '.join(sorted(map(str,missing)))
-				print ""
-		print ""
+			print ""
+
+if __name__ == '__main__' :
+	if len(sys.argv) <= 1 :
+		print "Please provide a file name"
+		sys.exit(-1)
+
+	layouts, laysubopt, allsubopt = loadSubLayouts(sys.argv[1:])
+
+	print 'Loaded %d layouts'%len(layouts)
+	print 'Names: ' + ', '.join(layouts.keys()) + '\n'
+
+	# Set up DEAP toolbox
+	toolbox = deapsetup(layouts)
+	# Optimize
+	pop,stats,hof = main(toolbox)
+	# Print out results from the hall of fame
+	printStats(hof, layouts, laysubopt)
